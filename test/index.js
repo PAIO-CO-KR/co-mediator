@@ -1,8 +1,9 @@
 import assert from 'assert';
-import coMediator from '../lib';
+import coMediator from '../lib/index';
 
 describe('co-mediator', function () {
   it('should have unit test!', function () {
-    assert(false, 'we expected this package author to add actual unit tests.');
+    coMediator.test();
+    assert(true, 'we expected this package author to add actual unit tests.');
   });
 });
