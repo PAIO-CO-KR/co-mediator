@@ -14,7 +14,8 @@
   "main": "dist/index.js",
   "keywords": [
     "co",
-    "mediator"
+    "mediator",
+    "co-mediator"
   ],
   "repository": "https://github.com/PAIO-CO-KR/co-mediator.git",
   "devDependencies": {
@@ -35,5 +36,8 @@
     "prepublish": "gulp prepublish",
     "test": "gulp"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "co": "^4.6.0"
+  }
 }
