@@ -78,4 +78,32 @@ describe('co-mediator', function () {
     });
     cm.publish('test', testData);
   });
+
+  it('subscribed callback function shouldn\' be called after unsubscribe', function (done) {
+    let cm = new CoMediator();
+    let testData = 'a string';
+    let subscriberSymbol = cm.subscribe('test', function* () {
+      done('callback can not be called');
+    });
+    cm.unsubscribe(subscriberSymbol);
+    cm.publish('test', testData);
+    setTimeout(function () {
+      done();
+    }, 10);
+  });
+
+  it('trying to unsubscribe not existing subscriber should issue an error', function (done) {
+    let cm = new CoMediator();
+    let subscriberSymbol = cm.subscribe('test', function* () {});
+    cm.unsubscribe(subscriberSymbol);
+    try {
+      cm.unsubscribe(subscriberSymbol);
+    } catch (e) {
+      assert(e === 'no such subscriber symbol');
+      done();
+      return;
+    }
+    done('error should be issued');
+  });
+
 });
