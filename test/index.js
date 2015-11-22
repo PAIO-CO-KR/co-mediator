@@ -67,16 +67,18 @@ describe('co-mediator', function () {
 
   it('subscribed once generator callback function', function (done) {
     let cm = new CoMediator();
-    let testData = 'a string';
-    cm.subscribeOnce('test', function* (publishedData) {
-      assert(testData === publishedData, 'should be called with passed data');
+    let testData1 = 'a string 1';
+    let testData2 = 'a string 2';
+    cm.subscribeOnce('test', function* (publishedData1, publishedData2) {
+      assert(testData1 === publishedData1, 'should be called with passed data');
+      assert(testData2 === publishedData2, 'should be called with passed data');
       let a = yield Promise.resolve(1);
       assert(a === 1, 'should be called as co-generator-function');
       done();
     }, function (e) {
       done(e);
     });
-    cm.publish('test', testData);
+    cm.publish('test', testData1, testData2);
   });
 
   it('subscribed callback function shouldn\' be called after unsubscribe', function (done) {
