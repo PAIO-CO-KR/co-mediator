@@ -1,6 +1,5 @@
 # co-mediator [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url] [![Coverage percentage][coveralls-image]][coveralls-url]
-> co mediator
-
+> A mediator with [co](https://github.com/tj/co) wrapped subscriber.
 
 ## Install
 
@@ -12,9 +11,47 @@ $ npm install --save co-mediator
 ## Usage
 
 ```js
-var coMediator = require('co-mediator');
+let CoMediator = require('co-mediator');
+let cm = new CoMediator();
+let testData1 = 'a string 1';
+let testData2 = 'a string 2';
 
-coMediator('Rainbow');
+//a normal subscriber.
+let subscriberSymbol1 = cm.subscribe('test', function (publishedData1, publishedData2) {
+  console.log(publishedData1 + ' and ' + publishedData2);
+});
+
+//a generator subscriber. it will be co wrapped.
+let subscriberSymbol2 = cm.subscribe('test', function* (publishedData1, publishedData2) {
+  console.log(publishedData1 + ' and ' + publishedData2);
+  yield Promise.resolve(true);
+});
+
+//error handler
+let subscriberSymbol3 = cm.subscribe('test', function* (publishedData1, publishedData2) {
+  throw 'an error from the subscriber';
+}, function (e) {
+  console.log('thrown error ' + e);
+});
+
+//publish. specipying channel & arguments. you can pass 0 or more arguments
+cm.publish('test');
+cm.publish('test', testData1);
+cm.publish('test', testData1, testData2);
+
+//unsubscribe
+cm.unsubscribe(subscriberSymbol1);
+cm.unsubscribe(subscriberSymbol2);
+cm.unsubscribe(subscriberSymbol3);
+cm.publish('test', testData1, testData2);
+
+//subscribe once
+let subscriberSymbol3 = cm.subscribeOnce('test', function* (publishedData1, publishedData2) {
+  console.log('this code will be called one time');
+}, function (e) {
+  console.log('thrown error ' + e);
+});
+cm.publish('test', testData1, testData2);
 ```
 
 ## License
