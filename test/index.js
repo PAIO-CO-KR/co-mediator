@@ -108,4 +108,31 @@ describe('co-mediator', function () {
     done('error should be issued');
   });
 
+  it('procedure should be registered/called with param and returns result', function (done) {
+    let cm = new CoMediator();
+    cm.subscribeProcedure('ch', function* () {
+      return yield Promise.resolve('wrong result');
+    });
+    cm.subscribeProcedure('ch', function* (param) {
+      assert(param === 'param', 'should be called with param');
+      return yield Promise.resolve('result');
+    });
+
+    cm.procedure('ch', 'param')
+      .then(function (val) {
+        assert(val === 'result', 'should return result');
+        cm.procedure('wrong ch')
+          .then(function () {
+            done('should not be called with wrong ch');
+          })
+          .catch(function (e) {
+            assert(e === 'no procedure found', 'should throw error');
+            done();
+          });
+      })
+      .catch(function (e) {
+        done(e);
+      });
+  });
+
 });

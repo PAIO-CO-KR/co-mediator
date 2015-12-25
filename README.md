@@ -52,6 +52,21 @@ let subscriberSymbol3 = cm.subscribeOnce('test', function* (publishedData1, publ
   console.log('thrown error ' + e);
 });
 cm.publish('test', testData1, testData2);
+
+//subscribe procedure
+cm.subscribeProcedure('ch', function* (param) {
+  console.log('passed param is ' + param);
+  return yield Promise.resolve('result');
+});
+
+//call procedure
+cm.procedure('ch', 'param')
+  .then(function (val) {
+    console.log('result is ' + val);
+  })
+  .catch(function (e) {
+    console.log('this line prints if called proc throws error');
+  });
 ```
 
 ## License
