@@ -89,6 +89,14 @@ describe('co-mediator', function () {
     });
     cm.unsubscribe(subscriberSymbol);
     cm.publish('test', testData);
+
+    let cb = function* () {
+      done('callback can not be called');
+    };
+    cm.subscribe('test2', cb);
+    cm.unsubscribe(cb);
+    cm.publish('test2', testData);
+
     setTimeout(function () {
       done();
     }, 10);
