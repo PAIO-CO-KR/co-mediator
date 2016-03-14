@@ -81,7 +81,7 @@ describe('co-mediator', function () {
     cm.publish('test', testData1, testData2);
   });
 
-  it('subscribed callback function shouldn\' be called after unsubscribe', function (done) {
+  it('subscribed callback function shouldn\'t be called after unsubscribe', function (done) {
     let cm = new CoMediator();
     let testData = 'a string';
     let subscriberSymbol = cm.subscribe('test', function* () {
@@ -100,20 +100,6 @@ describe('co-mediator', function () {
     setTimeout(function () {
       done();
     }, 10);
-  });
-
-  it('trying to unsubscribe not existing subscriber should issue an error', function (done) {
-    let cm = new CoMediator();
-    let subscriberSymbol = cm.subscribe('test', function* () {});
-    cm.unsubscribe(subscriberSymbol);
-    try {
-      cm.unsubscribe(subscriberSymbol);
-    } catch (e) {
-      assert(e === 'no such subscriber symbol');
-      done();
-      return;
-    }
-    done('error should be issued');
   });
 
   it('procedure should be registered/called with param and returns result', function (done) {
@@ -135,7 +121,12 @@ describe('co-mediator', function () {
           })
           .catch(function (e) {
             assert(e === 'no procedure found', 'should throw error');
-            done();
+            cm.procedureCb('ch', function (val2) {
+              assert(val2 === 'result', 'should return result');
+              done();
+            }, function (e2) {
+              done('proper call should not be fell in with exeption' + e2);
+            }, 'param');
           });
       })
       .catch(function (e) {
