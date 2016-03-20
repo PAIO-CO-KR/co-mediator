@@ -102,6 +102,32 @@ describe('co-mediator', function () {
     }, 10);
   });
 
+  it('subscribed by tag callback function shouldn\'t be called after unsubscribe', function (done) {
+    let cm = new CoMediator();
+    let testData = 'a string';
+    cm.subscribe({
+      ch: 'test',
+      tag: 'atag'
+    }, function* () {
+      done('callback can not be called');
+    });
+
+    let cb = function* () {
+      done('callback can not be called');
+    };
+    cm.subscribe({
+      ch: 'test2',
+      tag: 'atag'
+    }, cb);
+    cm.unsubscribe('atag');
+    cm.publish('test', testData);
+    cm.publish('test2', testData);
+
+    setTimeout(function () {
+      done();
+    }, 10);
+  });
+
   it('procedure should be registered/called with param and returns result', function (done) {
     let cm = new CoMediator();
     cm.subscribeProcedure('ch', function* () {
