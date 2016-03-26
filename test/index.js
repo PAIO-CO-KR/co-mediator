@@ -163,7 +163,9 @@ describe('co-mediator', function () {
   it('subscribed and subscribing callbacks should be called when publishing status', function (done) {
     let cm = new CoMediator();
     let testData = 'a string 1';
-    let subCalled, subOnceCalled, subStatusCalled = false;
+    let subCalled = false;
+    let subOnceCalled = false;
+    let subStatusCalled = false;
     cm.subscribe('test', function* (publishedData) {
       assert(testData === publishedData, 'should be called with passed data');
       subCalled = true;
@@ -184,7 +186,7 @@ describe('co-mediator', function () {
       done(e);
     });
     cm.unpublishStatus('test');
-    cm.subscribe('test', function* (publishedData) {
+    cm.subscribe('test', function* () {
       done('should not be called after unpublishStatus');
     }, function (e) {
       done(e);
