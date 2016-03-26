@@ -160,4 +160,41 @@ describe('co-mediator', function () {
       });
   });
 
+  it('subscribed and subscribing callbacks should be called when publishing status', function (done) {
+    let cm = new CoMediator();
+    let testData = 'a string 1';
+    let subCalled, subOnceCalled, subStatusCalled = false;
+    cm.subscribe('test', function* (publishedData) {
+      assert(testData === publishedData, 'should be called with passed data');
+      subCalled = true;
+    }, function (e) {
+      done(e);
+    });
+    cm.subscribeOnce('test', function* (publishedData) {
+      assert(testData === publishedData, 'should be called with passed data');
+      subOnceCalled = true;
+    }, function (e) {
+      done(e);
+    });
+    cm.publishStatus('test', testData);
+    cm.subscribe('test', function* (publishedData) {
+      assert(testData === publishedData, 'should be called with passed data');
+      subStatusCalled = true;
+    }, function (e) {
+      done(e);
+    });
+    cm.unpublishStatus('test');
+    cm.subscribe('test', function* (publishedData) {
+      done('should not be called after unpublishStatus');
+    }, function (e) {
+      done(e);
+    });
+    setTimeout(function () {
+      assert(subCalled === true, 'subscribed should be called with passed data');
+      assert(subOnceCalled === true, 'subscribed once should be called with passed data');
+      assert(subStatusCalled === true, 'delayed subscribed should be called with passed data');
+      done();
+    }, 10);
+  });
+
 });
