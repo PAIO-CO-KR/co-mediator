@@ -1,127 +1,131 @@
 import assert from 'assert';
 import CoMediator from '../lib/index';
 
-describe('co-mediator', function () {
-
-  it('thrown error on subscribed callback function', function (done) {
-    let cm = new CoMediator();
-    let error = 'an error';
-    cm.subscribe('test', function* () {
-      throw error;
-    }, function (e) {
-      assert(e === error, 'must be caught.');
-      done();
-    });
-    cm.publish('test');
-  });
-
-  it('thrown error on subscribed once callback function', function (done) {
-    let cm = new CoMediator();
-    let error = 'an error';
-    cm.subscribeOnce('test', function* () {
-      throw error;
-    }, function (e) {
-      assert(e === error, 'must be caught.');
-      done();
-    });
-    cm.publish('test');
-  });
-
-  it('subscribed callback function', function (done) {
-    let cm = new CoMediator();
+describe('mediator', function () {
+  it('subscribed callback function should be called', function (done) {
+    let m = new CoMediator().mediator;
     let testData = 'a string';
-    cm.subscribe('test', function (publishedData) {
+    m.subscribe('test', function (publishedData) {
       assert(testData === publishedData, 'should be called with passed data');
       done();
-    }, function (e) {
-      done(e);
     });
-    cm.publish('test', testData);
+    m.publish('test', testData);
   });
 
-  it('subscribed generator callback function', function (done) {
-    let cm = new CoMediator();
+  it('subscribed once callback function should be called', function (done) {
+    let m = new CoMediator().mediator;
     let testData = 'a string';
-    cm.subscribe('test', function* (publishedData) {
-      assert(testData === publishedData, 'should be called with passed data');
-      let a = yield Promise.resolve(1);
-      assert(a === 1, 'should be called as co-generator-function');
-      done();
-    }, function (e) {
-      done(e);
-    });
-    cm.publish('test', testData);
-  });
-
-  it('subscribed once callback function', function (done) {
-    let cm = new CoMediator();
-    let testData = 'a string';
-    cm.subscribeOnce('test', function (publishedData) {
+    m.subscribeOnce('test', function (publishedData) {
       assert(testData === publishedData, 'should be called with passed data');
       done();
-    }, function (e) {
-      done(e);
     });
-    cm.publish('test', testData);
-  });
-
-  it('subscribed once generator callback function', function (done) {
-    let cm = new CoMediator();
-    let testData1 = 'a string 1';
-    let testData2 = 'a string 2';
-    cm.subscribeOnce('test', function* (publishedData1, publishedData2) {
-      assert(testData1 === publishedData1, 'should be called with passed data');
-      assert(testData2 === publishedData2, 'should be called with passed data');
-      let a = yield Promise.resolve(1);
-      assert(a === 1, 'should be called as co-generator-function');
-      done();
-    }, function (e) {
-      done(e);
-    });
-    cm.publish('test', testData1, testData2);
+    m.publish('test', testData);
   });
 
   it('subscribed callback function shouldn\'t be called after unsubscribe', function (done) {
-    let cm = new CoMediator();
+    let m = new CoMediator().mediator;
     let testData = 'a string';
-    let subscriberSymbol = cm.subscribe('test', function* () {
+    let subscriberId = m.subscribe('test', function () {
       done('callback can not be called');
     });
-    cm.unsubscribe(subscriberSymbol);
-    cm.publish('test', testData);
-
-    let cb = function* () {
-      done('callback can not be called');
-    };
-    cm.subscribe('test2', cb);
-    cm.unsubscribe(cb);
-    cm.publish('test2', testData);
+    m.unsubscribe(subscriberId);
+    m.publishOnce('test', testData);
 
     setTimeout(function () {
       done();
     }, 10);
   });
 
-  it('subscribed by tag callback function shouldn\'t be called after unsubscribe', function (done) {
-    let cm = new CoMediator();
-    let testData = 'a string';
-    cm.subscribe({
-      ch: 'test',
-      tag: 'atag'
-    }, function* () {
-      done('callback can not be called');
+  it('procedure should be registered/called with param and returns result', function (done) {
+    let m = new CoMediator().mediator;
+    m.registerProcedure('ch', function (param, callback) {
+      assert(param === 'param', 'should be called with param');
+      callback('result');
     });
 
-    let cb = function* () {
-      done('callback can not be called');
-    };
-    cm.subscribe({
-      ch: 'test2',
-      tag: 'atag'
-    }, cb);
-    cm.unsubscribe('atag');
+    m.procedure('ch', 'param', function (result) {
+      assert(result === 'result', 'should return result');
+      m.unregisterProcedure('ch');
+      m.procedure('ch', 'param', function () {
+        done('unregistered procedure should not be called');
+      });
+      setTimeout(function () {
+        done();
+      }, 10);
+    });
+  });
+
+  it('subscribed and subscribing callbacks should be called when publishing status', function (done) {
+    let m = new CoMediator().mediator;
+    let testData = 'a string 1';
+    let subCalled = false;
+    let subOnceCalled = false;
+    let subStatusCalled = false;
+    m.subscribe('test', function (publishedData) {
+      assert(testData === publishedData, 'should be called with passed data');
+      subCalled = true;
+    });
+    m.subscribeOnce('test', function (publishedData) {
+      assert(testData === publishedData, 'should be called with passed data');
+      subOnceCalled = true;
+    });
+    m.publish('test', testData);
+    m.subscribe('test', function (publishedData) {
+      assert(testData === publishedData, 'should be called with passed data');
+      subStatusCalled = true;
+    });
+    setTimeout(function () {
+      assert(subCalled === true, 'subscribed should be called with passed data');
+      assert(subOnceCalled === true, 'subscribed once should be called with passed data');
+      assert(subStatusCalled === true, 'delayed subscribed should be called with passed data');
+
+      m.unpublish('test');
+      m.subscribe('test', function () {
+        done('should not be called after unpublishStatus');
+      });
+      setTimeout(function () {
+        done();
+      }, 10);
+    }, 10);
+  });
+});
+
+
+describe('co-mediator', function () {
+  it('subscribed callback function should be called', function (done) {
+    let cm = new CoMediator();
+    let testData = 'a string';
+    cm.subscribe('test', function* (publishedData) {
+      let a = yield Promise.resolve(1);
+      assert(a === 1, 'should be called as co-generator-function');
+      assert(testData === publishedData, 'should be called with passed data');
+      done();
+    });
     cm.publish('test', testData);
-    cm.publish('test2', testData);
+  });
+
+  it('subscribed once callback function should be called', function (done) {
+    let cm = new CoMediator();
+    let testData = 'a string';
+    cm.subscribeOnce('test', function* (publishedData) {
+      let a = yield Promise.resolve(1);
+      assert(a === 1, 'should be called as co-generator-function');
+      assert(testData === publishedData, 'should be called with passed data');
+      done();
+    });
+    cm.publish('test', testData);
+  });
+
+  it('subscribed callback function shouldn\'t be called after unsubscribe', function (done) {
+    let cm = new CoMediator();
+    let testData = 'a string';
+    let subscriberId = cm.subscribe('test', function* () {
+      let a = yield Promise.resolve(1);
+      assert(a === 1, 'should be called as co-generator-function');
+      done('callback can not be called');
+    });
+    cm.unsubscribe(subscriberId);
+    cm.publishOnce('test', testData);
 
     setTimeout(function () {
       done();
@@ -130,34 +134,23 @@ describe('co-mediator', function () {
 
   it('procedure should be registered/called with param and returns result', function (done) {
     let cm = new CoMediator();
-    cm.subscribeProcedure('ch', function* () {
-      return yield Promise.resolve('wrong result');
-    });
-    cm.subscribeProcedure('ch', function* (param) {
+    cm.registerProcedure('ch', function* (param, callback) {
+      let a = yield Promise.resolve(1);
+      assert(a === 1, 'should be called as co-generator-function');
       assert(param === 'param', 'should be called with param');
-      return yield Promise.resolve('result');
+      callback('result');
     });
 
-    cm.procedure('ch', 'param')
-      .then(function (val) {
-        assert(val === 'result', 'should return result');
-        cm.procedure('wrong ch')
-          .then(function () {
-            done('should not be called with wrong ch');
-          })
-          .catch(function (e) {
-            assert(e === 'no procedure found', 'should throw error');
-            cm.procedureCb('ch', function (val2) {
-              assert(val2 === 'result', 'should return result');
-              done();
-            }, function (e2) {
-              done('proper call should not be fell in with exeption' + e2);
-            }, 'param');
-          });
-      })
-      .catch(function (e) {
-        done(e);
+    cm.procedure('ch', 'param').then(function (result) {
+      assert(result === 'result', 'should return result');
+      cm.procedure('ch', 'param', function () {
+      }).then(function () {
+        done('unregistered procedure should not be called');
       });
+      setTimeout(function () {
+        done();
+      }, 10);
+    });
   });
 
   it('subscribed and subscribing callbacks should be called when publishing status', function (done) {
@@ -167,35 +160,38 @@ describe('co-mediator', function () {
     let subOnceCalled = false;
     let subStatusCalled = false;
     cm.subscribe('test', function* (publishedData) {
+      let a = yield Promise.resolve(1);
+      assert(a === 1, 'should be called as co-generator-function');
       assert(testData === publishedData, 'should be called with passed data');
       subCalled = true;
-    }, function (e) {
-      done(e);
     });
     cm.subscribeOnce('test', function* (publishedData) {
+      let a = yield Promise.resolve(1);
+      assert(a === 1, 'should be called as co-generator-function');
       assert(testData === publishedData, 'should be called with passed data');
       subOnceCalled = true;
-    }, function (e) {
-      done(e);
     });
-    cm.publishStatus('test', testData);
+    cm.publish('test', testData);
     cm.subscribe('test', function* (publishedData) {
+      let a = yield Promise.resolve(1);
+      assert(a === 1, 'should be called as co-generator-function');
       assert(testData === publishedData, 'should be called with passed data');
       subStatusCalled = true;
-    }, function (e) {
-      done(e);
-    });
-    cm.unpublishStatus('test');
-    cm.subscribe('test', function* () {
-      done('should not be called after unpublishStatus');
-    }, function (e) {
-      done(e);
     });
     setTimeout(function () {
       assert(subCalled === true, 'subscribed should be called with passed data');
       assert(subOnceCalled === true, 'subscribed once should be called with passed data');
       assert(subStatusCalled === true, 'delayed subscribed should be called with passed data');
-      done();
+
+      cm.unpublish('test');
+      cm.subscribe('test', function* () {
+        let a = yield Promise.resolve(1);
+        assert(a === 1, 'should be called as co-generator-function');
+        done('should not be called after unpublishStatus');
+      });
+      setTimeout(function () {
+        done();
+      }, 10);
     }, 10);
   });
 
